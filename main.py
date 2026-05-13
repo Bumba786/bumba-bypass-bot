@@ -1,56 +1,71 @@
 import os
 import telebot
+from telebot import types
 import requests
 
+# আপনার বটের টোকেন এবং গ্রুপ লিঙ্ক
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
+GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0MmE1"
 
-# বাইপাস ফাংশন
-def get_bypass(url):
-    try:
-        api_url = f"https://api.bypass.vip/bypass?url={url}"
-        response = requests.get(api_url, timeout=10)
-        data = response.json()
-        if data.get("status") == "success":
-            return data.get("destination")
-        return None
-    except:
-        return None
-
-# /start কমান্ড
+# /start কমান্ড দিলে গ্রুপে জয়েন করার মেসেজ দেখাবে
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.reply_to(message, "👋 **Welcome to BUMBA PRIVATE BOT!**\n\nলিঙ্ক বাইপাস করতে ব্যবহার করুন: `/b [link]`\nসাপোর্টেড সাইট দেখতে লিখুন: `/supported`", parse_mode='Markdown')
+    photo_url = 'https://graph.org/file/e6074a38753238686e06b.jpg' # আপনার লোগোর লিঙ্ক
+    
+    markup = types.InlineKeyboardMarkup()
+    btn_group = types.InlineKeyboardButton("✨ Join Our Group ✨", url=GROUP_LINK)
+    markup.add(btn_group)
 
-# /supported কমান্ড
-@bot.message_handler(commands=['supported'])
-def supported(message):
-    bot.reply_to(message, "✅ **Supported Sites:**\n\n- Adrinolinks\n- GPLinks\n- Droplink\n- Linkvertise\n- এবং আরও অনেক!")
+    caption = (
+        "👋 **Welcome to BUMBA PVT LTD!**\n\n"
+        "আমাদের বটটি ব্যবহার করতে নিচের গ্রুপে জয়েন করুন।\n"
+        "সেখানে লিঙ্ক দিলে আমি সেটি অটোমেটিক বাইপাস করে দেব।\n\n"
+        "🚀 **গ্রুপ লিঙ্ক নিচে দেওয়া হলো:**"
+    )
+    bot.send_photo(message.chat.id, photo_url, caption=caption, reply_markup=markup, parse_mode='Markdown')
 
-# /b কমান্ড (আপনার স্ক্রিনশটের মতো সুন্দর রেজাল্ট দেবে)
+# বাইপাস কমান্ড (/b) - যা শুধুমাত্র গ্রুপে কাজ করবে
 @bot.message_handler(commands=['b'])
 def bypass(message):
-    args = message.text.split(maxsplit=1)
-    if len(args) < 2:
-        bot.reply_to(message, "⚠️ **ভুল নিয়ম!** এভাবে লিখুন: `/b https://example.com`", parse_mode='Markdown')
+    # ইনবক্সে কাজ করা বন্ধ করতে এই চেকটি রাখা হয়েছে
+    if message.chat.type == 'private':
+        bot.reply_to(message, f"❌ **দুঃখিত!** এই বটটি ইনবক্সে কাজ করবে না। বাইপাস করতে আমাদের গ্রুপে জয়েন করুন:\n{GROUP_LINK}")
         return
 
-    original_link = args[1]
-    msg = bot.reply_to(message, "⏳ **BUMBA প্রসেস করছে...**")
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(message, "⚠️ **লিঙ্ক দিন!** যেমন: `/b [link]`")
+        return
+
+    url = args[1]
+    user_id = message.from_user.id
+    msg = bot.reply_to(message, "⏳ **BUMBA PVT LTD প্রসেস করছে...**")
     
-    result = get_bypass(original_link)
-    
-    if result:
-        response_text = (
-            f"🚀 **BUMBA BYPASS BOT**\n\n"
-            f"🔗 **Original Link :-**\n{original_link}\n\n"
-            f"🔓 **Bypassed Link :-** {result}"
-        )
-        bot.edit_message_text(response_text, msg.chat.id, msg.message_id, parse_mode='Markdown', disable_web_page_preview=True)
-    else:
-        bot.edit_message_text("❌ **দুঃখিত! এই লিঙ্কটি বাইপাস করা সম্ভব হয়নি।**", msg.chat.id, msg.message_id)
+    # এপিআই দিয়ে বাইপাস করা
+    try:
+        api_url = f"https://api.diskuze.in/bypass?url={url}"
+        r = requests.get(api_url, timeout=10).json()
+        
+        if r.get("status") == "success":
+            res = r.get("destination")
+            response_text = (
+                f"🚀 **BUMBA PVT LTD BYPASS SUCCESS**\n\n"
+                f"┏ 🔗 **Original Link :-**\n"
+                f"┠ {url}\n"
+                f"┃\n"
+                f"┗ 🔒 **Bypassed Link :-** {res}\n\n"
+                f"╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼\n"
+                f"**Requested By :-** `{user_id}`"
+            )
+            bot.edit_message_text(response_text, msg.chat.id, msg.message_id, parse_mode='Markdown', disable_web_page_preview=True)
+        else:
+            bot.edit_message_text("❌ **এই লিঙ্কটি বাইপাস করা সম্ভব হয়নি।**", msg.chat.id, msg.message_id)
+    except:
+        bot.edit_message_text("⚠️ **সার্ভার এরর! পরে চেষ্টা করুন।**", msg.chat.id, msg.message_id)
 
 bot.infinity_polling()
+
 
 
 
