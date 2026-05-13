@@ -6,31 +6,36 @@ import requests
 # আপনার বটের টোকেন এবং গ্রুপ লিঙ্ক
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
-GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0MmE1"
+GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0NmE1"
 
-# /start কমান্ড দিলে গ্রুপে জয়েন করার মেসেজ দেখাবে
+# /start কমান্ড দিলে স্বাগত জানাবে
 @bot.message_handler(commands=['start'])
 def start(message):
-    photo_url = 'https://graph.org/file/e6074a38753238686e06b.jpg' # আপনার লোগোর লিঙ্ক
+    photo_url = "https://graph.org/file/a6074a3875323868fe06b.jpg"
     
     markup = types.InlineKeyboardMarkup()
     btn_group = types.InlineKeyboardButton("✨ Join Our Group ✨", url=GROUP_LINK)
     markup.add(btn_group)
-
+    
     caption = (
-        "👋 **Welcome to BUMBA PVT LTD!**\n\n"
-        "আমাদের বটটি ব্যবহার করতে নিচের গ্রুপে জয়েন করুন।\n"
-        "সেখানে লিঙ্ক দিলে আমি সেটি অটোমেটিক বাইপাস করে দেব।\n\n"
-        "🚀 **গ্রুপ লিঙ্ক নিচে দেওয়া হলো:**"
+        "**👋 Welcome to BUMBA PVT LTD!**\n\n"
+        "আমাদের বটিক ব্যবহার করতে নিচের লিঙ্কে জয়েন করুন।\n"
+        "সেখানে লিঙ্ক দিলে আমি সেটি অটোমেটিক বাইপাস করে দেব।\n"
+        "গ্রুপ লিঙ্ক নিচে দেওয়া হলো: 👇"
     )
-    bot.send_photo(message.chat.id, photo_url, caption=caption, reply_markup=markup, parse_mode='Markdown')
+    
+    try:
+        bot.send_photo(message.chat.id, photo_url, caption=caption, reply_markup=markup, parse_mode='Markdown')
+    except:
+        # ছবি লোড না হলে শুধু টেক্সট পাঠাবে যাতে এরর না আসে
+        bot.send_message(message.chat.id, caption, reply_markup=markup, parse_mode='Markdown')
 
 # বাইপাস কমান্ড (/b) - যা শুধুমাত্র গ্রুপে কাজ করবে
 @bot.message_handler(commands=['b'])
 def bypass(message):
-    # ইনবক্সে কাজ করা বন্ধ করতে এই চেকটি রাখা হয়েছে
+    # ইনবক্সে কাজ বন্ধ করার জন্য এই ফিল্টার দেওয়া হয়েছে
     if message.chat.type == 'private':
-        bot.reply_to(message, f"❌ **দুঃখিত!** এই বটটি ইনবক্সে কাজ করবে না। বাইপাস করতে আমাদের গ্রুপে জয়েন করুন:\n{GROUP_LINK}")
+        bot.reply_to(message, f"❌ **দুঃখিত!** এই বটটি ইনবক্সে কাজ করবে না। বাইপাস করতে আমাদের গ্রুপে জয়েন করুন: {GROUP_LINK}")
         return
 
     args = message.text.split(maxsplit=1)
@@ -41,30 +46,32 @@ def bypass(message):
     url = args[1]
     user_id = message.from_user.id
     msg = bot.reply_to(message, "⏳ **BUMBA PVT LTD প্রসেস করছে...**")
-    
-    # এপিআই দিয়ে বাইপাস করা
+
+    # এপিআই দিয়ে বাইপাস করা
     try:
         api_url = f"https://api.diskuze.in/bypass?url={url}"
         r = requests.get(api_url, timeout=10).json()
-        
+
         if r.get("status") == "success":
             res = r.get("destination")
             response_text = (
                 f"🚀 **BUMBA PVT LTD BYPASS SUCCESS**\n\n"
-                f"┏ 🔗 **Original Link :-**\n"
-                f"┠ {url}\n"
-                f"┃\n"
-                f"┗ 🔒 **Bypassed Link :-** {res}\n\n"
-                f"╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼╼\n"
-                f"**Requested By :-** `{user_id}`"
+                f"🔗 **Original Link :**\n"
+                f"├ `{url}`\n"
+                f"└ \n"
+                f"🔓 **Bypassed Link :** {res}\n\n"
+                f"-------------------\n"
+                f"👤 **Requested By :** <a href='tg://user?id={user_id}'>{user_id}</a>"
             )
-            bot.edit_message_text(response_text, msg.chat.id, msg.message_id, parse_mode='Markdown', disable_web_page_preview=True)
+            bot.edit_message_text(response_text, msg.chat.id, msg.message_id, parse_mode='HTML', disable_web_page_preview=True)
         else:
-            bot.edit_message_text("❌ **এই লিঙ্কটি বাইপাস করা সম্ভব হয়নি।**", msg.chat.id, msg.message_id)
-    except:
-        bot.edit_message_text("⚠️ **সার্ভার এরর! পরে চেষ্টা করুন।**", msg.chat.id, msg.message_id)
+            bot.edit_message_text("❌ **এই লিঙ্কটি বাইপাস করা সম্ভব হয়নি।**", msg.chat.id, msg.message_id)
+    except Exception as e:
+        bot.edit_message_text(f"⚠️ **সার্ভার এরর!** পরে চেষ্টা করুন।", msg.chat.id, msg.message_id)
 
+# বট চালু রাখা
 bot.infinity_polling()
+
 
 
 
