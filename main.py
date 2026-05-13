@@ -4,9 +4,38 @@ from telebot import types
 import requests
 import time
 
+# Configuration
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0MmE1"
+
+# ৩টি আলাদা এপিআই দিয়ে চেক করার শক্তিশালী মেথড
+def get_bypass_result(url):
+    # Method 1: Bypass VIP (RDX style)
+    try:
+        r1 = requests.get(f"https://api.bypass.vip/bypass?url={url}", timeout=15)
+        d1 = r1.json()
+        if d1.get("status") == "success" or "destination" in d1:
+            return d1.get("destination") or d1.get("shortenedUrl")
+    except: pass
+
+    # Method 2: Adrinolinks (Your personal API)
+    try:
+        r2 = requests.get(f"https://adrinolinks.in/api?api=96f86058e17424b953330f576e2704ed92244243&url={url}", timeout=15)
+        d2 = r2.json()
+        if d2.get("status") == "success":
+            return d2.get("shortenedUrl")
+    except: pass
+
+    # Method 3: Universal Bypass Fallback
+    try:
+        r3 = requests.get(f"https://api.shrtco.de/v2/shorten?url={url}", timeout=10)
+        d3 = r3.json()
+        if d3.get("ok"):
+            return d3["result"]["full_share_link"]
+    except: pass
+    
+    return None
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -27,50 +56,33 @@ def bypass(message):
 
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(message, "⚠️ লিঙ্ক দিন! যেমন: `/b https://indiaearnx.com/a5Pd`", parse_mode='Markdown')
+        bot.reply_to(message, "⚠️ লিঙ্ক দিন! উদাহরণ: `/b https://indiaearnx.com/a5Pd`", parse_mode='Markdown')
         return
 
-    url = args[1]
+    url = args[1].strip()
     
-    # RDX স্টাইল প্রগ্রেস বার (Screenshot 1000197438.jpg এর মতো)
-    sent_msg = bot.reply_to(message, "⏳ **Bypassing :- 0%**\n`[----------]`")
-    time.sleep(1)
-    bot.edit_message_text(f"⏳ **Bypassing :- 40%**\n`[####------]`", sent_msg.chat.id, sent_msg.message_id, parse_mode='Markdown')
-    
-    try:
-        # এটি সবচেয়ে শক্তিশালী বাইপাস এপিআই যা indiaearnx লিঙ্ক ভাঙতে পারে
-        api_url = f"https://api.shrtco.de/v2/shorten?url={url}" # ব্যাকআপের জন্য রাখা হলো
-        
-        # মূল বাইপাস রিকোয়েস্ট (RDX বটের মতো পাওয়ারফুল)
-        bypass_url = f"https://api.bypass.vip/bypass?url={url}" 
-        r = requests.get(bypass_url, timeout=20)
-        data = r.json()
+    # প্রফেশনাল প্রগ্রেস বার (Screenshot 1000197438.jpg এর মতো)
+    sent_msg = bot.reply_to(message, "⏳ **Bypassing :- 10%**\n`[#---------]`")
+    time.sleep(0.5)
+    bot.edit_message_text("⏳ **Bypassing :- 60%**\n`[######----]`", sent_msg.chat.id, sent_msg.message_id, parse_mode='Markdown')
 
-        # RDX বটের হুবহু ডিজাইন (Screenshot 1000197439.jpg অনুযায়ী)
-        if "destination" in data or data.get("status") == "success":
-            res = data.get("destination") or data.get("shortenedUrl")
-            final_text = (
-                f"┎ 🔗 **Original Link :-**\n┃ {url}\n"
-                f"┃\n┖ 🔒 **Bypassed Link :-**\n{res}\n\n"
-                "━━━━━━━✦✗✦━━━━━━━"
-            )
-            bot.edit_message_text(final_text, sent_msg.chat.id, sent_msg.message_id, parse_mode='Markdown', disable_web_page_preview=True)
-        else:
-            # যদি প্রথমটি কাজ না করে তবে আপনার adrinolinks এপিআই ট্রাই করবে
-            fallback_url = f"https://adrinolinks.in/api?api=96f86058e17424b953330f576e2704ed92244243&url={url}"
-            fr = requests.get(fallback_url)
-            fdata = fr.json()
-            if fdata.get("status") == "success":
-                fres = fdata.get("shortenedUrl")
-                bot.edit_message_text(f"✅ **Bypass Success:** {fres}", sent_msg.chat.id, sent_msg.message_id)
-            else:
-                bot.edit_message_text("❌ লিঙ্কটি সাপোর্ট করছে না। অন্য লিঙ্ক দিন।", sent_msg.chat.id, sent_msg.message_id)
-                
-    except Exception as e:
-        bot.edit_message_text(f"⚠️ সার্ভার এরর! আবার চেষ্টা করুন।", sent_msg.chat.id, sent_msg.message_id)
+    # রেজাল্ট খোঁজা
+    result = get_bypass_result(url)
+
+    if result and result != "None":
+        # হুবহু RDX ডিজাইন (Screenshot 1000197439.jpg অনুযায়ী)
+        final_text = (
+            f"┎ 🔗 **Original Link :-**\n┃ `{url}`\n"
+            f"┃\n┖ 🔓 **Bypassed Link :-**\n{result}\n\n"
+            "━━━━━━━✦✗✦━━━━━━━"
+        )
+        bot.edit_message_text(final_text, sent_msg.chat.id, sent_msg.message_id, parse_mode='Markdown', disable_web_page_preview=True)
+    else:
+        bot.edit_message_text("❌ **Failed!** এই লিঙ্কটি বর্তমানে বাইপাস করা যাচ্ছে না।", sent_msg.chat.id, sent_msg.message_id)
 
 if __name__ == "__main__":
     bot.infinity_polling()
+
 
 
 
