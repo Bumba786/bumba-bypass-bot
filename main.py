@@ -9,31 +9,30 @@ TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0MmE1"
 
-# ৩টি আলাদা এপিআই দিয়ে চেক করার শক্তিশালী মেথড
-def get_bypass_result(url):
-    # Method 1: Bypass VIP (RDX style)
-    try:
-        r1 = requests.get(f"https://api.bypass.vip/bypass?url={url}", timeout=15)
-        d1 = r1.json()
-        if d1.get("status") == "success" or "destination" in d1:
-            return d1.get("destination") or d1.get("shortenedUrl")
-    except: pass
+# স্ক্রিনশট 1000197446.jpg থেকে পাওয়া আসল কাজ করা এপিআই
+PRIVATE_API_URL = "https://web-production-6701d.up.railway.app/bypass"
 
-    # Method 2: Adrinolinks (Your personal API)
+def get_bypass_result(url):
+    # Method 1: Private Railway API (The real working one)
+    try:
+        # স্ক্রিনশটে যেমন ছিল হুবহু সেই POST মেথড
+        r1 = requests.post(PRIVATE_API_URL, json={"url": url}, timeout=25)
+        d1 = r1.json()
+        # রেজাল্ট চেক করা (bypassed_url বা destination যেকোনো একটি হতে পারে)
+        res = d1.get("bypassed_url") or d1.get("destination") or d1.get("url")
+        if res:
+            return res
+    except:
+        pass
+
+    # Method 2: Adrinolinks Fallback (Your personal API)
     try:
         r2 = requests.get(f"https://adrinolinks.in/api?api=96f86058e17424b953330f576e2704ed92244243&url={url}", timeout=15)
         d2 = r2.json()
         if d2.get("status") == "success":
             return d2.get("shortenedUrl")
-    except: pass
-
-    # Method 3: Universal Bypass Fallback
-    try:
-        r3 = requests.get(f"https://api.shrtco.de/v2/shorten?url={url}", timeout=10)
-        d3 = r3.json()
-        if d3.get("ok"):
-            return d3["result"]["full_share_link"]
-    except: pass
+    except:
+        pass
     
     return None
 
@@ -56,12 +55,12 @@ def bypass(message):
 
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(message, "⚠️ লিঙ্ক দিন! উদাহরণ: `/b https://indiaearnx.com/a5Pd`", parse_mode='Markdown')
+        bot.reply_to(message, "⚠️ লিঙ্ক দিন! যেমন: `/b https://indiaearnx.com/a5Pd`", parse_mode='Markdown')
         return
 
     url = args[1].strip()
     
-    # প্রফেশনাল প্রগ্রেস বার (Screenshot 1000197438.jpg এর মতো)
+    # প্রফেশনাল প্রগ্রেস অ্যানিমেশন
     sent_msg = bot.reply_to(message, "⏳ **Bypassing :- 10%**\n`[#---------]`")
     time.sleep(0.5)
     bot.edit_message_text("⏳ **Bypassing :- 60%**\n`[######----]`", sent_msg.chat.id, sent_msg.message_id, parse_mode='Markdown')
@@ -70,7 +69,7 @@ def bypass(message):
     result = get_bypass_result(url)
 
     if result and result != "None":
-        # হুবহু RDX ডিজাইন (Screenshot 1000197439.jpg অনুযায়ী)
+        # RDX ডিজাইন অনুযায়ী আউটপুট
         final_text = (
             f"┎ 🔗 **Original Link :-**\n┃ `{url}`\n"
             f"┃\n┖ 🔓 **Bypassed Link :-**\n{result}\n\n"
@@ -82,6 +81,7 @@ def bypass(message):
 
 if __name__ == "__main__":
     bot.infinity_polling()
+
 
 
 
