@@ -3,15 +3,15 @@ import telebot
 from telebot import types
 import requests
 
-# আপনার বটের টোকেন এবং গ্রুপ লিঙ্ক
+# আপনার বটের টোকেন এবং আপডেট করা গ্রুপ লিঙ্ক
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
-GROUP_LINK = "[https://t.me/+EZr3Z1r8Eac0NmE1](https://t.me/+EZr3Z1r8Eac0NmE1)"
-
+GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0NmE1"
 
 # /start কমান্ড দিলে স্বাগত জানাবে
 @bot.message_handler(commands=['start'])
 def start(message):
+    # আপনার লগের ফটো এরর এড়াতে try-except ব্যবহার করা হয়েছে
     photo_url = "https://graph.org/file/a6074a3875323868fe06b.jpg"
     
     markup = types.InlineKeyboardMarkup()
@@ -20,21 +20,21 @@ def start(message):
     
     caption = (
         "**👋 Welcome to BUMBA PVT LTD!**\n\n"
-        "আমাদের বটিক ব্যবহার করতে নিচের লিঙ্কে জয়েন করুন।\n"
+        "আমাদের বটটি ব্যবহার করতে নিচের লিঙ্কে জয়েন করুন।\n"
         "সেখানে লিঙ্ক দিলে আমি সেটি অটোমেটিক বাইপাস করে দেব।\n"
         "গ্রুপ লিঙ্ক নিচে দেওয়া হলো: 👇"
     )
     
     try:
         bot.send_photo(message.chat.id, photo_url, caption=caption, reply_markup=markup, parse_mode='Markdown')
-    except:
-        # ছবি লোড না হলে শুধু টেক্সট পাঠাবে যাতে এরর না আসে
+    except Exception:
+        # ছবি কাজ না করলে শুধু টেক্সট পাঠাবে যাতে বট ক্রাশ না করে
         bot.send_message(message.chat.id, caption, reply_markup=markup, parse_mode='Markdown')
 
 # বাইপাস কমান্ড (/b) - যা শুধুমাত্র গ্রুপে কাজ করবে
 @bot.message_handler(commands=['b'])
 def bypass(message):
-    # ইনবক্সে কাজ বন্ধ করার জন্য এই ফিল্টার দেওয়া হয়েছে
+    # ইনবক্সে কাজ বন্ধ রাখার ফিল্টার
     if message.chat.type == 'private':
         bot.reply_to(message, f"❌ **দুঃখিত!** এই বটটি ইনবক্সে কাজ করবে না। বাইপাস করতে আমাদের গ্রুপে জয়েন করুন: {GROUP_LINK}")
         return
@@ -48,7 +48,7 @@ def bypass(message):
     user_id = message.from_user.id
     msg = bot.reply_to(message, "⏳ **BUMBA PVT LTD প্রসেস করছে...**")
 
-    # এপিআই দিয়ে বাইপাস করা
+    # বাইপাস এপিআই কল
     try:
         api_url = f"https://api.diskuze.in/bypass?url={url}"
         r = requests.get(api_url, timeout=10).json()
@@ -67,11 +67,13 @@ def bypass(message):
             bot.edit_message_text(response_text, msg.chat.id, msg.message_id, parse_mode='HTML', disable_web_page_preview=True)
         else:
             bot.edit_message_text("❌ **এই লিঙ্কটি বাইপাস করা সম্ভব হয়নি।**", msg.chat.id, msg.message_id)
-    except Exception as e:
+    except Exception:
         bot.edit_message_text(f"⚠️ **সার্ভার এরর!** পরে চেষ্টা করুন।", msg.chat.id, msg.message_id)
 
 # বট চালু রাখা
-bot.infinity_polling()
+if __name__ == "__main__":
+    bot.infinity_polling()
+
 
 
 
