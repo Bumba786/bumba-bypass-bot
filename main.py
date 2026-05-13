@@ -6,7 +6,9 @@ import requests
 # আপনার বটের টোকেন এবং আপডেট করা গ্রুপ লিঙ্ক
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
-GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0NmE1"
+GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0MmE1"
+
+
 
 # /start কমান্ড দিলে স্বাগত জানাবে
 @bot.message_handler(commands=['start'])
