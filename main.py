@@ -2,60 +2,55 @@ import os
 import telebot
 import requests
 
-# Railway-র Environment Variables থেকে টোকেন নেবে
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 
 # বাইপাস ফাংশন
 def get_bypass(url):
     try:
-        # একটি শক্তিশালী পাবলিক এপিআই
         api_url = f"https://api.bypass.vip/bypass?url={url}"
         response = requests.get(api_url, timeout=10)
         data = response.json()
-        
         if data.get("status") == "success":
             return data.get("destination")
-        else:
-            return f"❌ এরর: {data.get('message', 'এই লিঙ্কটি সাপোর্ট করছে না।')}"
-    except Exception as e:
-        return "⚠️ সার্ভার বর্তমানে ব্যস্ত আছে, পরে চেষ্টা করুন।"
+        return None
+    except:
+        return None
 
 # /start কমান্ড
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
-    welcome_text = (
-        "👋 **স্বাগতম BUMBA PRIVATE BOT-এ!**\n\n"
-        "আমি আপনাকে বিভিন্ন শর্টলিঙ্ক বাইপাস করতে সাহায্য করতে পারি।\n\n"
-        "📌 **কিভাবে ব্যবহার করবেন:**\n"
-        "যেকোনো লিঙ্ক বাইপাস করতে লিখুন: `/b [আপনার লিঙ্ক]`\n\n"
-        "উদাহরণ: `/b https://indiaearnx.com/xyz`"
-    )
-    bot.reply_to(message, welcome_text, parse_mode='Markdown')
+def start(message):
+    bot.reply_to(message, "👋 **Welcome to BUMBA PRIVATE BOT!**\n\nলিঙ্ক বাইপাস করতে ব্যবহার করুন: `/b [link]`\nসাপোর্টেড সাইট দেখতে লিখুন: `/supported`", parse_mode='Markdown')
 
-# /help কমান্ড
-@bot.message_handler(commands=['help'])
-def help_command(message):
-    help_text = "সাহায্যের জন্য সরাসরি আপনার লিঙ্কটি `/b` লিখে পাঠান। যদি কাজ না করে তবে বুঝবেন ওই লিঙ্কটি এখনো আমাদের সিস্টেমে যোগ করা হয়নি।"
-    bot.reply_to(message, help_text)
+# /supported কমান্ড
+@bot.message_handler(commands=['supported'])
+def supported(message):
+    bot.reply_to(message, "✅ **Supported Sites:**\n\n- Adrinolinks\n- GPLinks\n- Droplink\n- Linkvertise\n- এবং আরও অনেক!")
 
-# /b (Bypass) কমান্ড
+# /b কমান্ড (আপনার স্ক্রিনশটের মতো সুন্দর রেজাল্ট দেবে)
 @bot.message_handler(commands=['b'])
-def bypass_handler(message):
-    msg_parts = message.text.split(maxsplit=1)
-    
-    if len(msg_parts) < 2:
-        bot.reply_to(message, "⚠️ ভুল ফরম্যাট! সঠিক নিয়ম: `/b https://yourlink.com`")
+def bypass(message):
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(message, "⚠️ **ভুল নিয়ম!** এভাবে লিখুন: `/b https://example.com`", parse_mode='Markdown')
         return
 
-    target_url = msg_parts[1]
-    bot.reply_to(message, "⏳ **বুম্বা প্রসেস করছে... দয়া করে অপেক্ষা করুন।**")
+    original_link = args[1]
+    msg = bot.reply_to(message, "⏳ **BUMBA প্রসেস করছে...**")
     
-    final_result = get_bypass(target_url)
-    bot.reply_to(message, f"✅ **সাফল্য! আপনার লিঙ্ক:**\n\n{final_result}")
+    result = get_bypass(original_link)
+    
+    if result:
+        response_text = (
+            f"🚀 **BUMBA BYPASS BOT**\n\n"
+            f"🔗 **Original Link :-**\n{original_link}\n\n"
+            f"🔓 **Bypassed Link :-** {result}"
+        )
+        bot.edit_message_text(response_text, msg.chat.id, msg.message_id, parse_mode='Markdown', disable_web_page_preview=True)
+    else:
+        bot.edit_message_text("❌ **দুঃখিত! এই লিঙ্কটি বাইপাস করা সম্ভব হয়নি।**", msg.chat.id, msg.message_id)
 
-# বট চালু রাখা
-if __name__ == "__main__":
-    bot.infinity_polling()
+bot.infinity_polling()
+
 
 
