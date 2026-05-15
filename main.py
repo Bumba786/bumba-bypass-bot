@@ -1,86 +1,103 @@
 import os
 import telebot
-from telebot import types
 import requests
 import time
+from telebot import types
 
-# Configuration
+# --- Configuration ---
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
-GROUP_LINK = "https://t.me/+EZr3Z1r8Eac0MmE1"
+GROUP_LINK = "https://t.me/+EZr3ZIr8Eac0MmE1"
 
-# স্ক্রিনশট 1000197446.jpg থেকে পাওয়া আসল কাজ করা এপিআই
-PRIVATE_API_URL = "https://web-production-6701d.up.railway.app/bypass"
+# আদ্রি লিঙ্কের জন্য একটি ব্যাকআপ API ডোমেইন (যা অনেক সময় সচল থাকে)
+ADRINELINKS_API_URL = "https://adrinelinks.in/api"
+API_KEY = os.getenv('API_KEY', '96f86058e17424b89311059f31a19616e0339d37')
 
 def get_bypass_result(url):
-    # Method 1: Private Railway API (The real working one)
+    """একাধিক মেথড ব্যবহার করে বাইপাস করার চেষ্টা করবে"""
+    
+    # মেথড ১: মাল্টি-বাইপাস পাবলিক API (সবচেয়ে শক্তিশালী)
     try:
-        # স্ক্রিনশটে যেমন ছিল হুবহু সেই POST মেথড
-        r1 = requests.post(PRIVATE_API_URL, json={"url": url}, timeout=25)
-        d1 = r1.json()
-        # রেজাল্ট চেক করা (bypassed_url বা destination যেকোনো একটি হতে পারে)
-        res = d1.get("bypassed_url") or d1.get("destination") or d1.get("url")
-        if res:
-            return res
+        r = requests.get(f"https://api.bypass.vip/bypass?url={url}", timeout=15)
+        data = r.json()
+        if data.get("status") == "success":
+            return data.get("destination")
     except:
         pass
 
-    # Method 2: Adrinolinks Fallback (Your personal API)
+    # মেথড ২: Adrinelinks Fallback
     try:
-        r2 = requests.get(f"https://adrinolinks.in/api?api=96f86058e17424b953330f576e2704ed92244243&url={url}", timeout=15)
-        d2 = r2.json()
-        if d2.get("status") == "success":
-            return d2.get("shortenedUrl")
+        params = {'api': API_KEY, 'url': url}
+        r = requests.get(ADRINELINKS_API_URL, params=params, timeout=15)
+        data = r.json()
+        if data.get("status") == "success":
+            return data.get("shortenedUrl")
     except:
         pass
-    
+
     return None
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    photo_url = "https://graph.org/file/a6074a3875323868fe06b.jpg"
+    photo_url = "https://graph.org/file/a8074a3875323868fe08b.jpg"
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("✨ Join Our Group ✨", url=GROUP_LINK))
-    caption = "👋 **Welcome to BUMBA PVT LTD!**\n\nলিঙ্ক বাইপাস করতে নিচের গ্রুপে জয়েন করুন। 👇"
+    markup.add(types.InlineKeyboardButton("📢 Join Our Group 📢", url=GROUP_LINK))
+    
+    caption = (
+        "✨ **Welcome to BUMBA PVT LTD!** ✨\n\n"
+        "লিঙ্ক বাইপাস করতে নিচের ফরম্যাটটি ব্যবহার করুন:\n"
+        "🔗 `/b https://link.com`"
+    )
+    
     try:
-        bot.send_photo(message.chat.id, photo_url, caption=caption, reply_markup=markup, parse_mode='Markdown')
+        bot.send_photo(message.chat.id, photo_url, caption=caption, reply_markup=markup, parse_mode="Markdown")
     except:
-        bot.send_message(message.chat.id, caption, reply_markup=markup, parse_mode='Markdown')
+        bot.send_message(message.chat.id, caption, reply_markup=markup, parse_mode="Markdown")
 
 @bot.message_handler(commands=['b'])
 def bypass(message):
-    if message.chat.type == 'private':
-        bot.reply_to(message, f"❌ ইনবক্সে হবে না! গ্রুপে জয়েন করুন:\n{GROUP_LINK}")
-        return
+    if message.chat.type == "private":
+        # প্রাইভেট চ্যাটে রেস্ট্রিকশন থাকলে এখানে কোড যোগ করা যায়
+        pass
 
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(message, "⚠️ লিঙ্ক দিন! যেমন: `/b https://indiaearnx.com/a5Pd`", parse_mode='Markdown')
+        bot.reply_to(message, "⚠️ **লিঙ্ক দিন!**\nউদাহরণ: `/b https://indiaearnx.com/xxx`", parse_mode="Markdown")
         return
 
     url = args[1].strip()
     
-    # প্রফেশনাল প্রগ্রেস অ্যানিমেশন
-    sent_msg = bot.reply_to(message, "⏳ **Bypassing :- 10%**\n`[#---------]`")
+    # সুন্দর প্রগ্রেস বার ডিজাইন
+    sent_msg = bot.reply_to(message, "⏳ **Bypassing :- 10%**\n`[#---------]`", parse_mode="Markdown")
     time.sleep(0.5)
-    bot.edit_message_text("⏳ **Bypassing :- 60%**\n`[######----]`", sent_msg.chat.id, sent_msg.message_id, parse_mode='Markdown')
-
+    bot.edit_message_text("⏳ **Bypassing :- 60%**\n`[######---]`", sent_msg.chat.id, sent_msg.message_id, parse_mode="Markdown")
+    
     # রেজাল্ট খোঁজা
     result = get_bypass_result(url)
-
-    if result and result != "None":
-        # RDX ডিজাইন অনুযায়ী আউটপুট
+    
+    if result:
+        time.sleep(0.3)
+        bot.edit_message_text("⏳ **Bypassing :- 100%**\n`[##########]`", sent_msg.chat.id, sent_msg.message_id, parse_mode="Markdown")
+        
         final_text = (
-            f"┎ 🔗 **Original Link :-**\n┃ `{url}`\n"
-            f"┃\n┖ 🔓 **Bypassed Link :-**\n{result}\n\n"
-            "━━━━━━━✦✗✦━━━━━━━"
+            "✅ **Bypass Successful!**\n\n"
+            f"🔗 **Original Link:** `{url}`\n\n"
+            f"🔓 **Bypassed Link:** {result}\n\n"
+            "✨ *Powered by Bumba Pvt Ltd*"
         )
-        bot.edit_message_text(final_text, sent_msg.chat.id, sent_msg.message_id, parse_mode='Markdown', disable_web_page_preview=True)
+        bot.edit_message_text(final_text, sent_msg.chat.id, sent_msg.message_id, parse_mode="Markdown", disable_web_page_preview=True)
     else:
-        bot.edit_message_text("❌ **Failed!** এই লিঙ্কটি বর্তমানে বাইপাস করা যাচ্ছে না।", sent_msg.chat.id, sent_msg.message_id)
+        error_text = (
+            "❌ **Failed!!**\n\n"
+            "এই লিঙ্কটি বর্তমানে বাইপাস করা সম্ভব হচ্ছে না।\n"
+            "সার্ভার ডাউন থাকতে পারে। পরে আবার চেষ্টা করুন।"
+        )
+        bot.edit_message_text(error_text, sent_msg.chat.id, sent_msg.message_id, parse_mode="Markdown")
 
 if __name__ == "__main__":
+    print("Bot is running...")
     bot.infinity_polling()
+
 
 
 
