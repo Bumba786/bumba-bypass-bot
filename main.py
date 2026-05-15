@@ -8,94 +8,93 @@ from telebot import types
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 
-# আপনার গ্রুপ লিঙ্ক (১০০% চেক করা)
+# আপনার গ্রুপ লিঙ্ক এবং ব্র্যান্ডিং (১০০% চেক করা)
 GROUP_LINK = "https://t.me/+EZr3ZIr8Eac0MmE1"
-
-# ওয়েলকাম ফটো লিঙ্ক
 WELCOME_PHOTO = "https://graph.org/file/a8074a3875323868fe08b.jpg"
+BRAND = "⚡ BUMBA PVT LTD ⚡"
 
-def get_bypass(url):
-    """Egolinks এবং Bypass VIP দিয়ে লিঙ্ক চেক করার ফাংশন"""
+def get_bypass_result(url):
+    """৩টি শক্তিশালী ইঞ্জিন দিয়ে ট্রাই করবে"""
+    # মেথড ১: Egolinks API
     try:
-        # মেথড ১: Egolinks
-        ego_url = f"https://egolinks.site/api?api=5962888691f97750835f83857321520630b9d99c&url={url}"
-        res = requests.get(ego_url, timeout=15)
-        data = res.json()
-        if data.get("status") == "success":
-            return data.get("shortened_url")
-    except:
-        pass
+        res = requests.get(f"https://egolinks.site/api?api=5962888691f97750835f83857321520630b9d99c&url={url}", timeout=12).json()
+        if res.get("status") == "success": return res.get("shortened_url")
+    except: pass
 
+    # মেথড ২: Bypass VIP
     try:
-        # মেথড ২: Bypass VIP (ব্যাকআপ)
-        res = requests.get(f"https://api.bypass.vip/bypass?url={url}", timeout=15)
-        data = res.json()
-        if data.get("status") == "success":
-            return data.get("destination")
-    except:
-        pass
+        res = requests.get(f"https://api.bypass.vip/bypass?url={url}", timeout=10).json()
+        if res.get("status") == "success": return res.get("destination")
+    except: pass
+
+    # মেথড ৩: Droplink API
+    try:
+        res = requests.get(f"https://droplink.co/api?api=96f86058e17424b89311059f31a19616e0339d37&url={url}", timeout=10).json()
+        if res.get("status") == "success": return res.get("shortened_url")
+    except: pass
+    
     return None
 
-# --- নিউ মেম্বার ওয়েলকাম মেসেজ ---
+# --- গ্র্যান্ড ওয়েলকাম মেসেজ ---
 @bot.message_handler(commands=['start'])
-def welcome(message):
-    user_name = message.from_user.first_name
-    
-    # গ্রুপ লিঙ্কের জন্য বাটন
+def start(message):
     markup = types.InlineKeyboardMarkup()
-    btn_group = types.InlineKeyboardButton("📢 আমাদের গ্রুপে জয়েন করুন 📢", url=GROUP_LINK)
-    markup.add(btn_group)
+    markup.add(types.InlineKeyboardButton("📢 JOIN OFFICIAL GROUP 📢", url=GROUP_LINK))
     
-    welcome_text = (
-        f"👋 **হ্যালো {user_name}!**\n\n"
-        "✨ **BUMBA ADVANCE BYPASS BOT**-এ আপনাকে স্বাগতম! ✨\n\n"
-        "আমি আপনার দেওয়া কঠিন শর্টনার লিঙ্কগুলো সহজে বাইপাস করতে পারি।\n\n"
+    caption = (
+        f"👋 **হ্যালো, {message.from_user.first_name}!**\n\n"
+        f"👑 **{BRAND} BYPASS BOT**\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "আমি আপনার যেকোনো কঠিন লিঙ্ক মুহূর্তেই বাইপাস করে দিতে পারি।\n\n"
         "🚀 **ব্যবহার করবেন কীভাবে:**\n"
-        "লিঙ্কটি পাঠান এইভাবে: `/b আপনার_লিঙ্ক` \n\n"
+        "🔗 `/b [আপনার লিঙ্ক]`\n\n"
         "সব আপডেট পেতে নিচের বাটনে ক্লিক করে আমাদের গ্রুপে জয়েন থাকুন!"
     )
-    
     try:
-        bot.send_photo(message.chat.id, WELCOME_PHOTO, caption=welcome_text, reply_markup=markup, parse_mode="Markdown")
+        bot.send_photo(message.chat.id, WELCOME_PHOTO, caption=caption, reply_markup=markup, parse_mode="Markdown")
     except:
-        bot.send_message(message.chat.id, welcome_text, reply_markup=markup, parse_mode="Markdown")
+        bot.send_message(message.chat.id, caption, reply_markup=markup, parse_mode="Markdown")
 
-# --- লিঙ্ক বাইপাস কমান্ড ---
+# --- প্রো লেভেল বাইপাস হ্যান্ডলার ---
 @bot.message_handler(commands=['b'])
-def bypass_command(message):
+def bypass_handler(message):
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
-        bot.reply_to(message, "⚠️ **দয়া করে লিঙ্ক দিন!** \nউদাহরণ: `/b https://indiaearnx.com/xxx`", parse_mode="Markdown")
+        bot.reply_to(message, "⚠️ **লিঙ্ক দিতে ভুলে গেছেন ওস্তাদ!**\nসঠিক নিয়ম: `/b https://link.com`", parse_mode="Markdown")
         return
 
     url = args[1].strip()
-    sent_msg = bot.reply_to(message, "🔄 **অ্যানালাইজ করা হচ্ছে... ১৫%**\n`[##--------]`", parse_mode="Markdown")
+    status = bot.reply_to(message, "🔍 **Analyzing Link... 10%**\n`▒▒▒▒▒▒▒▒▒▒`", parse_mode="Markdown")
     
     time.sleep(0.5)
-    bot.edit_message_text("⚡ **সিকিউরিটি ভাঙা হচ্ছে... ৬৫%**\n`[######----]`", sent_msg.chat.id, sent_msg.message_id, parse_mode="Markdown")
+    bot.edit_message_text("⚡ **Bypassing Security... 60%**\n`██████▒▒▒▒`", status.chat.id, status.message_id, parse_mode="Markdown")
     
-    result = get_bypass(url)
+    result = get_bypass_result(url)
     
     if result:
-        bot.edit_message_text("✨ **সাফল্য! ১০০%**\n`[##########]`", sent_msg.chat.id, sent_msg.message_id, parse_mode="Markdown")
-        final_text = (
-            "✅ **লিঙ্ক বাইপাস সফল হয়েছে!**\n\n"
-            f"📥 **মূল লিঙ্ক:** `{url}`\n"
-            f"📤 **বাইপাস লিঙ্ক:** {result}\n\n"
-            f"📢 **আপডেট পেতে জয়েন করুন:** [ক্লিক করুন]({GROUP_LINK})"
+        time.sleep(0.3)
+        bot.edit_message_text("✨ **Success! 100%**\n`██████████`", status.chat.id, status.message_id, parse_mode="Markdown")
+        
+        final_msg = (
+            f"✅ **BYPASS COMPLETED!**\n\n"
+            f"📥 **Original:** `{url}`\n"
+            f"📤 **Unlocked:** {result}\n\n"
+            f"📢 **Join:** [আমাদের গ্রুপে ক্লিক করুন]({GROUP_LINK})\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"👑 *Powered by {BRAND}*"
         )
-        bot.edit_message_text(final_text, sent_msg.chat.id, sent_msg.message_id, parse_mode="Markdown", disable_web_page_preview=True)
+        bot.edit_message_text(final_msg, status.chat.id, status.message_id, parse_mode="Markdown", disable_web_page_preview=True)
     else:
-        error_text = (
-            "❌ **বাইপাস ব্যর্থ হয়েছে!**\n\n"
-            "সার্ভার এই লিঙ্কটি প্রসেস করতে পারছে না। RDX বা আদ্রি লিঙ্ক সার্ভার অফলাইন থাকলে এমন হতে পারে।\n\n"
-            f"সাহায্যের জন্য আমাদের [গ্রুপে]({GROUP_LINK}) মেসেজ দিন।"
+        error_msg = (
+            "❌ **FAILED TO BYPASS!**\n\n"
+            "এই লিঙ্কের সিকিউরিটি বর্তমানে অনেক শক্তিশালী। ফ্রি সার্ভার এটি ভাঙতে পারছে না।\n\n"
+            f"💡 **আপডেট পেতে গ্রুপে জয়েন করুন:** [BUMBA SUPPORT]({GROUP_LINK})"
         )
-        bot.edit_message_text(error_text, sent_msg.chat.id, sent_msg.message_id, parse_mode="Markdown", disable_web_page_preview=True)
+        bot.edit_message_text(error_msg, status.chat.id, status.message_id, parse_mode="Markdown", disable_web_page_preview=True)
 
 if __name__ == "__main__":
-    print("Bot is running...")
     bot.infinity_polling()
+
 
 
 
