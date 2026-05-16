@@ -9,8 +9,8 @@ from telebot import types
 TOKEN = os.getenv('BOT_TOKEN') # রেলওয়ে বা ভিপিএস-এ আপনার বটের টোকেন
 bot = telebot.TeleBot(TOKEN)
 
-# 🔒 আপনার নতুন রেন্ডার এপিআই লিঙ্ক এখানে সেট করা হলো
-RAILWAY_API_URL = "https://bumba-bypass-api.onrender.com/bypass"
+# 🔒 আপনার নিজস্ব সার্ভিস ইনফো
+BUMBA_API_URL = "https://bumba-bypass-api.onrender.com/bypass"
 EGOLINKS_API_KEY = "adec84f7928c09e3aa63531c5be3b240d12e25c6"
 GROUP_LINK = "https://t.me/+EZr3ZIr8Eac0MmE1"
 BRAND = "👑 BUMBA PVT LTD 👑"
@@ -22,31 +22,30 @@ def smart_bypass(url):
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     }
 
-    # 🚀 ১ নম্বর চেষ্টা: আপনার নতুন রেন্ডার এপিআই (প্রধান ইঞ্জিন)
+    # 🚀 ১ নম্বর চেষ্টা: আপনার নিজের রেন্ডার এপিআই (GET রিকোয়েস্ট অপ্টিমাইজড)
     try:
         params = {'url': url}
-        # রেন্ডার ফ্রি সার্ভার মাঝে মাঝে রেসপন্স করতে একটু টাইম নেয়, তাই টাইমআউট ১২ সেকেন্ড করা হলো
-        response = requests.get(RAILWAY_API_URL, params=params, timeout=12)
+        response = requests.get(BUMBA_API_URL, params=params, timeout=15)
         if response.status_code == 200:
             data = response.json()
             for key in ["bypassed_url", "url", "link", "bypassed"]:
-                if key in data and data[key]:
+                if key in data and data[key] and "error" not in str(data[key]).lower():
                     return data[key]
     except Exception:
         pass
 
-    # 🔄 ২ নম্বর চেষ্টা (ব্যাকআপ): আপনার Egolinks API
+    # 🔄 ২ নম্বর চেষ্টা (ব্যাকআপ): Egolinks API (ইন্ডিয়াআর্নক্স এর জন্য বেস্ট)
     try:
         api_url = f"https://egolinks.site/api?api={EGOLINKS_API_KEY}&url={url}"
-        api_res = requests.get(api_url, timeout=8).json()
+        api_res = requests.get(api_url, timeout=12).json()
         if api_res.get("status") == "success":
             return api_res.get("shortened_url")
     except Exception:
         pass
 
-    # 🛠 ৩ নম্বর চেষ্টা (শেষ ভরসা): সোর্স কোড স্ক্র্যাপিং
+    # 🛠 ৩ নম্বর চেষ্টা (শেষ ভরসা): সোর্স কোড স্ক্র্যাপিং 
     try:
-        res = client.get(url, headers=headers, timeout=8)
+        res = client.get(url, headers=headers, timeout=10)
         found = re.findall(r"var\s+(?:url|link|targetUrl)\s+=\s+'([^']+)'", res.text)
         if found:
             return found[0]
@@ -71,7 +70,7 @@ def start(message):
     )
     bot.send_message(message.chat.id, welcome_text, reply_markup=markup, parse_mode="Markdown")
 
-# --- বাইপাস হ্যান্ডলার (প্রিমিয়াম বক্স স্টাইল) ---
+# --- বাইপাস হ্যান্ডলার ---
 @bot.message_handler(commands=['b'])
 def handle_b(message):
     args = message.text.split(maxsplit=1)
@@ -118,4 +117,3 @@ def handle_b(message):
 
 if __name__ == "__main__":
     bot.infinity_polling()
-
